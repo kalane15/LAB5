@@ -41,7 +41,7 @@ public:
     }
 
     unsigned int MOr(LogicalValuesArray a, LogicalValuesArray b) {
-        return a.GetValue() | b.GetValue();
+        return MNot(MAnd(MNot(a), MNot(b)));
     }
 
     unsigned int MXor(LogicalValuesArray a, LogicalValuesArray b) {
@@ -96,17 +96,24 @@ public:
         return SUCCESS;
     }
 
-    void PrintValue() {
+    std::ostream& PrintValue(std::ostream& os) {
         uint i;
         for (i = 0; i < size; i++) {
-            std::cout << GetBit(i+1);
+            os << GetBit(i+1);
         }
         if (i == 0) {
-            std::cout << 0;
+            os << 0;
         }
-        std::cout << '\n';
+        return os;
     }
+
+    
 };
+
+std::ostream& operator << (std::ostream& os, LogicalValuesArray& a)
+{
+    return a.PrintValue(os);
+}
 
 int main()
 {
@@ -114,25 +121,40 @@ int main()
     strcpy(example, "101\0");
     LogicalValuesArray c = LogicalValuesArray();
     c.SetValueByString(example);
-    c.PrintValue();
 
     LogicalValuesArray a = LogicalValuesArray();
     LogicalValuesArray b = LogicalValuesArray();
     LogicalValuesArray res = LogicalValuesArray();
 
-    a.SetValueByString("11111");
-    b.SetValueByString("10000");    
-    res.SetValue(a.MNot(a), a.GetSize());
-    res.PrintValue();
+    a.SetValueByString("110110");
+    b.SetValueByString("100010");    
+   
+    res.SetValue(a.MAnd(a, b), a.GetSize());
+    std::cout << "And: " << a << ' ' << b << ' ' << res << '\n';
 
+    res.SetValue(a.MOr(a, b), a.GetSize());
+    std::cout << "Or: " << a << ' ' << b << ' ' << res << '\n';
 
-    a.SetValueByString("11011");
-    b.SetValueByString("10000");
     res.SetValue(a.MEq(a, b), a.GetSize());
-    res.PrintValue();
+    std::cout << "Equal: " << a << ' ' << b << ' ' << res << '\n';
 
-    a.SetValueByString("10010");
-    b.SetValueByString("10010");
+    res.SetValue(a.MIm(a, b), a.GetSize());
+    std::cout << "Implication: " << a << ' ' << b << ' ' << res << '\n';
+
+    res.SetValue(a.MKoim(a, b), a.GetSize());
+    std::cout << "Koimplication: " << a << ' ' << b << ' ' << res << '\n';
+
+    res.SetValue(a.MXor(a, b), a.GetSize());
+    std::cout << "Xor: " << a << ' ' << b << ' ' << res << '\n';
+
+    res.SetValue(a.MPirs(a, b), a.GetSize());
+    std::cout << "Pirs: " << a << ' ' << b << ' ' << res << '\n';
+
+    res.SetValue(a.MSheffer(a, b), a.GetSize());
+    std::cout << "Sheffer: " << a << ' ' << b << ' ' << res << '\n';
+
+    res.SetValue(a.MNot(a), a.GetSize());
+    std::cout << "Not: " << a << ' ' << res << '\n';
 
     std::cout << LogicalValuesArray::Equals(a, b) << '\n';
 }
