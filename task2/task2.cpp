@@ -50,33 +50,33 @@ private:
 
 public:
 
-    Encoder(const std::vector<std::byte> _key){
-        key = _key;
+    Encoder(const std::vector<std::byte> key_){
+        key = key_;
     }
 
 
-    void SetKey(std::vector<std::byte>& _key) {
-        key = _key;
+    void KeyMutator(std::vector<std::byte>& key_) {
+        key = key_;
     }
     
-    kErrors Encode(path input_path, path output_path) {
+    void Encode(path input_path, path output_path) {
         path input_full_path = absolute(input_path);
         path output_full_path = absolute(output_path);
 
         if (input_full_path == output_full_path) {
-            return INC_FILE;
+            throw std::invalid_argument("Incorrect file");
         }
 
         std::ifstream input;
         input.open(input_path, std::ios::binary);
         if (!input.is_open()) {
-            return INC_FILE;
+            throw std::invalid_argument("Incorrect file");
         }
 
         std::ofstream output;
         output.open(output_path, std::ios::binary);
         if (!output.is_open()) {
-            return INC_FILE;
+            throw std::invalid_argument("Incorrect file");
         }
 
         std::vector<std::byte> data;
@@ -90,7 +90,6 @@ public:
         for (int i = 0; i < result.size(); i++) {
             output << static_cast<char>(result[i]);
         }
-        return SUCCESS;
     }
 };
 
@@ -100,13 +99,18 @@ int main() {
 
     Encoder enc(key);
     kErrors status;
-    status = enc.Encode("in.txt", "in.bin");
-    if (status != SUCCESS) {
-        return ProccessError(status);
+    try {
+        enc.Encode("in.txt", "in.bin");
     }
-    status = enc.Encode("in.bin", "in2.txt");
-    if (status != SUCCESS) {
-        return ProccessError(status);
+    catch(std::invalid_argument& exc){
+        std::cout << exc.what() << '\n';
+    }
+
+    try {
+        enc.Encode("in.bin", "in2.txt");
+    }
+    catch (std::invalid_argument& exc) {
+        std::cout << exc.what() << '\n';
     }
     return 0;
 }

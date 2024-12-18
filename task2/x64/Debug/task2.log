@@ -1,2 +1,3 @@
 ﻿  task2.cpp
+D:\univer\LAB5\task2\task2.cpp(101,13): warning C4101: status: неиспользованная локальная переменная
   task2.vcxproj -> D:\univer\LAB5\x64\Debug\task2.exe

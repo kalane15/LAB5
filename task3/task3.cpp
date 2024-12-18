@@ -10,72 +10,114 @@ private:
     int size;
 public:
 
-    int GetSize() {
+    int GetSize() const{
         return size;
     }
 
-    unsigned int GetValue() {
+    unsigned int GetValue() const{
         return value;
     }
 
-    void SetValue(uint val, int _size) {
-        value = val;
+    void SetValue(LogicalValuesArray a) {
+        value = a.GetValue();
         int i = 0;
         //while ((1 << i) <= value) { i++; }
-        size = _size;
+        size = a.GetSize();
     }
 
-    LogicalValuesArray(unsigned int val = 0, int _size=0) {
+    LogicalValuesArray(unsigned int val = 0, int _size=-1) {
         value = val;
-        unsigned int i = 0;
-        //while ((1 << i) < value) { i++; }
-        size = _size;
+        if (_size != -1) {
+            size = _size;
+            return;
+        }
+        if (value > UINT_MAX / 2) {
+            size = sizeof(unsigned int) * 8;
+        }
+        else {
+            unsigned int i = 0;
+            while ((1 << i) < value) { i++; }
+            size = i - 1;
+        }
     }
 
-    unsigned int MNot(LogicalValuesArray l) {
-        return ~l.GetValue();
+    LogicalValuesArray MNot(const LogicalValuesArray& l) const {
+        return LogicalValuesArray(~l.GetValue(), l.size);
     }
 
-    unsigned int MAnd(LogicalValuesArray a, LogicalValuesArray b) {
-        return a.GetValue() & b.GetValue();
+    LogicalValuesArray MAnd(const LogicalValuesArray& a, const LogicalValuesArray& b) const{
+        if (a.GetSize() != b.GetSize()) {
+            throw std::invalid_argument("Different size");
+        }
+        return LogicalValuesArray(a.GetValue() & b.GetValue(), a.size) ;
     }
 
-    unsigned int MOr(LogicalValuesArray a, LogicalValuesArray b) {
+    LogicalValuesArray MOr(const LogicalValuesArray& a, const LogicalValuesArray& b) const{
+        if (a.GetSize() != b.GetSize()) {
+            throw std::invalid_argument("Different size");
+        }
         return MNot(MAnd(MNot(a), MNot(b)));
     }
 
-    unsigned int MXor(LogicalValuesArray a, LogicalValuesArray b) {
+    LogicalValuesArray MXor(const LogicalValuesArray& a, const LogicalValuesArray& b) const{
+        if (a.GetSize() != b.GetSize()) {
+            throw std::invalid_argument("Different size");
+        }
         return MOr(MAnd(MNot(a), b), MAnd(a, MNot(b)));
     }
 
-    unsigned int MIm(LogicalValuesArray a, LogicalValuesArray b) {
+    LogicalValuesArray MIm(const LogicalValuesArray& a, const LogicalValuesArray& b) const{
+        if (a.GetSize() != b.GetSize()) {
+            printf("Operations on array different length are undefined\n");
+            throw std::invalid_argument("Different size");
+        }
         return MNot(MAnd(a, MNot(b)));
     }
 
-    unsigned int MKoim(LogicalValuesArray a, LogicalValuesArray b) {
+    LogicalValuesArray MKoim(const LogicalValuesArray& a, const LogicalValuesArray& b) const{
+        if (a.GetSize() != b.GetSize()) {
+            printf("Operations on array different length are undefined\n");
+            throw std::invalid_argument("Different size");
+        }
         return MNot(MIm(a, b));
     }
 
-    unsigned int MEq(LogicalValuesArray a, LogicalValuesArray b) {
+    LogicalValuesArray MEq(const LogicalValuesArray& a, const LogicalValuesArray& b) const{
+        if (a.GetSize() != b.GetSize()) {
+            printf("Operations on array different length are undefined\n");
+            throw std::invalid_argument("Different size");
+        }
         return MOr(MAnd(a, b), MAnd(MNot(a), MNot(b)));
     }
 
-    unsigned int MPirs(LogicalValuesArray a, LogicalValuesArray b) {
+    LogicalValuesArray MPirs(const LogicalValuesArray& a, const LogicalValuesArray b) const{
+        if (a.GetSize() != b.GetSize()) {
+            printf("Operations on array different length are undefined\n");
+            throw std::invalid_argument("Different size");
+        }
         return MNot(MOr(a, b));
     }
-    unsigned int MSheffer(LogicalValuesArray a, LogicalValuesArray b) {
+    LogicalValuesArray MSheffer(const LogicalValuesArray& a, const LogicalValuesArray& b) const{
+        if (a.GetSize() != b.GetSize()) {
+            printf("Operations on array different length are undefined\n");
+            throw std::invalid_argument("Different size");
+        }
         return MNot(MAnd(a, b));
     }
 
-    static bool Equals(LogicalValuesArray a, LogicalValuesArray b) {
-        return a.MXor(a, b) == 0;
+    static bool Equ als(const LogicalValuesArray& a, const LogicalValuesArray& b) {
+        if (a.GetSize() != b.GetSize()) {
+            printf("Operations on array different length are undefined\n");
+            throw std::invalid_argument("Different size");
+        }
+        return a.MXor(a, b).GetValue() == 0;
     }
 
     int GetBit(int pos) {
         return (value & (1 << (pos - 1))) > 0 ? 1 : 0;
     }
 
-    kErrors SetValueByString(const char* s) {
+    void SetValueByString(const char* s) {
         uint res = UINT_MAX;
         uint cur = 1;
         size = strlen(s);
@@ -89,11 +131,10 @@ public:
                 }
             }
             else {
-                return INC_ARGS;
+                throw std::invalid_argument("Inorrect input strung\n");
             }
         }
         value = res;
-        return SUCCESS;
     }
 
     std::ostream& PrintValue(std::ostream& os) {
@@ -120,42 +161,48 @@ int main()
     char example[10];
     strcpy(example, "101\0");
     LogicalValuesArray c = LogicalValuesArray();
-    c.SetValueByString(example);
+    
 
-    LogicalValuesArray a = LogicalValuesArray();
-    LogicalValuesArray b = LogicalValuesArray();
+    LogicalValuesArray a = LogicalValuesArray(1010);
+    LogicalValuesArray b = LogicalValuesArray(1018);
     LogicalValuesArray res = LogicalValuesArray();
 
+    c.SetValueByString(example);
     a.SetValueByString("110110");
     b.SetValueByString("100010");    
    
-    res.SetValue(a.MAnd(a, b), a.GetSize());
-    std::cout << "And: " << a << ' ' << b << ' ' << res << '\n';
+    try {
+        res.SetValue(a.MAnd(a, b));
+        std::cout << "And: " << a << ' ' << b << ' ' << res << '\n';
 
-    res.SetValue(a.MOr(a, b), a.GetSize());
-    std::cout << "Or: " << a << ' ' << b << ' ' << res << '\n';
+        res.SetValue(a.MOr(a, b));
+        std::cout << "Or: " << a << ' ' << b << ' ' << res << '\n';
 
-    res.SetValue(a.MEq(a, b), a.GetSize());
-    std::cout << "Equal: " << a << ' ' << b << ' ' << res << '\n';
+        res.SetValue(a.MEq(a, b));
+        std::cout << "Equal: " << a << ' ' << b << ' ' << res << '\n';
 
-    res.SetValue(a.MIm(a, b), a.GetSize());
-    std::cout << "Implication: " << a << ' ' << b << ' ' << res << '\n';
+        res.SetValue(a.MIm(a, b));
+        std::cout << "Implication: " << a << ' ' << b << ' ' << res << '\n';
 
-    res.SetValue(a.MKoim(a, b), a.GetSize());
-    std::cout << "Koimplication: " << a << ' ' << b << ' ' << res << '\n';
+        res.SetValue(a.MKoim(a, b));
+        std::cout << "Koimplication: " << a << ' ' << b << ' ' << res << '\n';
 
-    res.SetValue(a.MXor(a, b), a.GetSize());
-    std::cout << "Xor: " << a << ' ' << b << ' ' << res << '\n';
+        res.SetValue(a.MXor(a, b));
+        std::cout << "Xor: " << a << ' ' << b << ' ' << res << '\n';
 
-    res.SetValue(a.MPirs(a, b), a.GetSize());
-    std::cout << "Pirs: " << a << ' ' << b << ' ' << res << '\n';
+        res.SetValue(a.MPirs(a, b));
+        std::cout << "Pirs: " << a << ' ' << b << ' ' << res << '\n';
 
-    res.SetValue(a.MSheffer(a, b), a.GetSize());
-    std::cout << "Sheffer: " << a << ' ' << b << ' ' << res << '\n';
+        res.SetValue(a.MSheffer(a, b));
+        std::cout << "Sheffer: " << a << ' ' << b << ' ' << res << '\n';
 
-    res.SetValue(a.MNot(a), a.GetSize());
-    std::cout << "Not: " << a << ' ' << res << '\n';
+        res.SetValue(a.MNot(a));
+        std::cout << "Not: " << a << ' ' << res << '\n';
 
-    std::cout << LogicalValuesArray::Equals(a, b) << '\n';
+        std::cout << LogicalValuesArray::Equals(a, b) << '\n';
+    }
+    catch(std::invalid_argument exc){
+        std::cout << exc.what();
+    }
 }
 
